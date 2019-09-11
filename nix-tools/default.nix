@@ -1,13 +1,15 @@
 { pkgs, lib, symlinkJoin, makeWrapper
 , hpack, git, nix, nix-prefetch-git
-, fetchExternal, cleanSourceHaskell, mkCabalProjectPkgSet }:
-
-let
-  src = cleanSourceHaskell (fetchExternal {
+, fetchExternal, cleanSourceHaskell, mkCabalProjectPkgSet
+, nixToolsSrc ? fetchExternal {
     name     = "nix-tools-src";
     specJSON = ./nix-tools-src.json;
     override = "nix-tools-src";
-  });
+  }
+}:
+
+let
+  src = cleanSourceHaskell nixToolsSrc;
   # we need to patch Cabal, as its data directory logic is broken for component builds, which haskell.nix
   # uses excessively. See issue https://github.com/haskell/cabal/issues/5862, and the fix for Cabal 3.0
   # in https://github.com/haskell/cabal/pull/6055. We apply the haskell/cabal#6055 here.

@@ -17,6 +17,11 @@ in
     specJSON = hackageSourceJSON;
     override = "hackage";
   }
+, nixToolsSrc ? fetchExternal {
+    name     = "nix-tools-src";
+    specJSON = ./nix-tools/nix-tools-src.json;
+    override = "nix-tools-src";
+  }
 }:
 
 let
@@ -141,7 +146,7 @@ let
     # We probably never want to actually cross compile nix-tools on
     # it's own.
     nix-tools-cross-compiled = pkgs.callPackage ./nix-tools {
-      inherit fetchExternal cleanSourceHaskell;
+      inherit fetchExternal cleanSourceHaskell nixToolsSrc;
       hpack = pkgs.haskell.lib.justStaticExecutables
         (pkgs.haskellPackages.hpack);
       inherit (self) mkCabalProjectPkgSet;
