@@ -10,12 +10,15 @@ in
 , nixpkgsArgs ? {}
 # You can provide different pins for hackage.nix and stackage.nix if required.
 # It's also possible to override these sources with NIX_PATH.
-, hackageSourceJSON ? ./hackage-src.json
-, stackageSourceJSON ? ./stackage-src.json
 , hackageSrc ? fetchExternal {
     name     = "hackage-exprs-source";
-    specJSON = hackageSourceJSON;
+    specJSON = ./hackage-src.json;
     override = "hackage";
+  }
+, stackageSrc ? fetchExternal {
+    name     = "stackage-snapshot-source";
+    specJSON = ./stackage-src.json;
+    override = "stackage";
   }
 }:
 
@@ -57,11 +60,6 @@ let
   indexStateHashesPath = hackageSrc + "/index-state-hashes.nix";
 
   # The set of all Stackage snapshots
-  stackageSrc = fetchExternal {
-    name     = "stackage-snapshot-source";
-    specJSON = stackageSourceJSON;
-    override = "stackage";
-  };
   stackage = import stackageSrc;
 
   packages = pkgs: self: (rec {
