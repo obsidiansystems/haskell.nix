@@ -353,8 +353,14 @@ in {
                     sha256 = "0qg3zsmbk4rkwkc3jpas3zs74qaxmw4sp4v1mhsbj0a0dzls2jjd";
                 };
 
-                ghc-patches = ghc-patches "8.6.5"
-                        ++ [ D5123-patch haddock-900-patch ];
+                ghc-patches = [ 
+                     (final.fetchurl {
+                    url = "https://raw.githubusercontent.com/obsidiansystems/splices-load-save.nix/master/patches/ghc-8.6.5/splices.patch";
+                    sha256 = "sha256-ro7GcOGiM8zciGHRv8r9qyFwbNcJjJ6wDqj1T1E3EKY=";
+                  })
+                  ./patches/ghc/AC_PROG_CC_99.patch
+                ]; 
+                #++ [ D5123-patch haddock-900-patch ] ++ ghc-patches "8.6.5";
                   # Add splices
             });
             ghc865 = final.callPackage ../compiler/ghc (traceWarnOld "8.6" {
