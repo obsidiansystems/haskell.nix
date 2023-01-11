@@ -51,7 +51,7 @@ let self =
      (!haskell-nix.haskellLib.isCrossTarget || !(stdenv.targetPlatform.isAarch64 || stdenv.targetPlatform.isWindows) || builtins.compareVersions ghc-version "8.10" >= 0)
 
 , # Wheter to build in NUMA support
-  enableNUMA ? true
+  enableNUMA ? !stdenv.targetPlatform.isAndroid
 
 , # What flavour to build. An empty string indicates no
   # specific flavour and falls back to ghc default values.
