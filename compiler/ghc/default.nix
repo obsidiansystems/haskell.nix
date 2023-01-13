@@ -30,7 +30,7 @@ let self =
 
 , # If enabled, GHC will be built with the GPL-free but slower integer-simple
   # library instead of the faster but GPLed integer-gmp library.
-  enableIntegerSimple ? !(lib.any (lib.meta.platformMatch stdenv.hostPlatform) gmp.meta.platforms), gmp
+  enableIntegerSimple ? stdenv.targetPlatform.isiOS && !(lib.any (lib.meta.platformMatch stdenv.hostPlatform) gmp.meta.platforms), gmp
 , # If enabled, GHC will be built with the GPL-free native backend of the
   # bignum library that is nearly as fast as GMP
   enableNativeBignum ? !((lib.any (lib.meta.platformMatch stdenv.hostPlatform) gmp.meta.platforms) || enableIntegerSimple)
@@ -48,10 +48,10 @@ let self =
 
 , enableTerminfo ?
     # Terminfo does not work on older ghc cross arm and windows compilers
-     (!haskell-nix.haskellLib.isCrossTarget || !(stdenv.targetPlatform.isAarch64 || stdenv.targetPlatform.isWindows) || builtins.compareVersions ghc-version "8.10" >= 0)
+     !stdenv.targetPlatform.isiOS && (!haskell-nix.haskellLib.isCrossTarget || !(stdenv.targetPlatform.isAarch64 || stdenv.targetPlatform.isWindows) || builtins.compareVersions ghc-version "8.10" >= 0)
 
 , # Wheter to build in NUMA support
-  enableNUMA ? !stdenv.targetPlatform.isAndroid
+  enableNUMA ? !stdenv.targetPlatform.isAndroid && !stdenv.targetPlatform.isiOS
 
 , # What flavour to build. An empty string indicates no
   # specific flavour and falls back to ghc default values.
@@ -169,7 +169,7 @@ let
   '';
 
   # Splicer will pull out correct variations
-  libDeps = platform: lib.optional enableTerminfo [ targetPackages.ncurses targetPackages.ncurses.dev ]
+  libDeps = platform: lib.optional (enableTerminfo && !stdenv.targetPlatform.isiOS) [ targetPackages.ncurses targetPackages.ncurses.dev ]
     ++ [targetLibffi]
     ++ lib.optional (!enableIntegerSimple) gmp
     ++ lib.optional (platform.libc != "glibc" && !targetPlatform.isWindows) libiconv
@@ -267,6 +267,7 @@ stdenv.mkDerivation (rec {
   # `--with` flags for libraries needed for RTS linker
   configureFlags = [
         "--datadir=$doc/share/doc/ghc"
+    ] ++ lib.optionals (enableTerminfo && !stdenv.targetPlatform.isiOS) [
         "--with-curses-includes=${targetPackages.ncurses.dev}/include" "--with-curses-libraries=${targetPackages.ncurses.out}/lib"
     ] ++ lib.optionals (targetLibffi != null) ["--with-system-libffi" "--with-ffi-includes=${targetLibffi.dev}/include" "--with-ffi-libraries=${targetLibffi.out}/lib"
     ] ++ lib.optional (!enableIntegerSimple) [
