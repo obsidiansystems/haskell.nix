@@ -30,13 +30,13 @@ let self =
 
 , # If enabled, GHC will be built with the GPL-free but slower integer-simple
   # library instead of the faster but GPLed integer-gmp library.
-  enableIntegerSimple ? stdenv.targetPlatform.isiOS && !(lib.any (lib.meta.platformMatch stdenv.hostPlatform) gmp.meta.platforms), gmp
+  enableIntegerSimple ? stdenv.targetPlatform.isiOS && stdenv.targetPlatform.isAndroid && !(lib.any (lib.meta.platformMatch stdenv.hostPlatform) gmp.meta.platforms), gmp
 , # If enabled, GHC will be built with the GPL-free native backend of the
   # bignum library that is nearly as fast as GMP
   enableNativeBignum ? !((lib.any (lib.meta.platformMatch stdenv.hostPlatform) gmp.meta.platforms) || enableIntegerSimple)
 
 , # If enabled, use -fPIC when compiling static libs.
-  enableRelocatedStaticLibs ? stdenv.targetPlatform != stdenv.hostPlatform && !stdenv.targetPlatform.isAarch32
+  enableRelocatedStaticLibs ? stdenv.targetPlatform.isAndroid || stdenv.targetPlatform != stdenv.hostPlatform && !stdenv.targetPlatform.isAarch32
 
 , # Whether to build dynamic libs for the standard library (on the target
   # platform). Static libs are always built.
