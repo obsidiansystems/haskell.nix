@@ -24,5 +24,5 @@ final: prev: prev.lib.optionalAttrs prev.stdenv.hostPlatform.isAndroid ({
     hardeningDisable = [ "fortify" "stackprotector" "format" ];
   });
 }) // prev.lib.optionalAttrs prev.stdenv.targetPlatform.isAndroid ({
-  bionic = prev.bionic.override { enableStatic = true; };
+  #bionic = prev.bionic.override { enableStatic = true; };
 })
