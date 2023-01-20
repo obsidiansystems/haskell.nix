@@ -240,6 +240,10 @@ let
       type = listOfFilteringNulls str;
       default = (def.hardeningDisable or []);
     };
+    hardeningEnable = mkOption {
+      type = listOfFilteringNulls str;
+      default = (def.hardeningEnable or []);
+    };
     ghcOptions = mkOption {
       type = listOfFilteringNulls str;
       default = def.ghcOptions or [];

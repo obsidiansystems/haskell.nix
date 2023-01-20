@@ -40,6 +40,7 @@ let self =
 , dontPatchELF ? component.dontPatchELF
 , dontStrip ? component.dontStrip
 , hardeningDisable ? component.hardeningDisable
+, hardeningEnable ? component.hardeningEnable
 
 , enableStatic ? component.enableStatic
 , enableShared ? ghc.enableShared && component.enableShared && !haskellLib.isCrossHost
@@ -629,5 +630,7 @@ let
   }
   // lib.optionalAttrs (hardeningDisable != [] || stdenv.hostPlatform.isMusl) {
     hardeningDisable = hardeningDisable ++ lib.optional stdenv.hostPlatform.isMusl "pie";
+  } // lib.optionalAttrs (hardeningEnable != []) {
+    inherit hardeningEnable;
   });
 in drv; in self)
