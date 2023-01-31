@@ -335,34 +335,6 @@ in {
                 ghc-patches = ghc-patches "8.6.4"
                             ++ [ D5123-patch ];
             });
-            ghc865Splices = final.callPackage ../compiler/ghc (traceWarnOld "8.6" {
-                extra-passthru = { buildGHC = final.buildPackages.haskell-nix.compiler.ghc865; };
-
-                inherit sphinx installDeps;
-                bootPkgs = bootPkgs // {
-                  # GHC 8.6.5 and earlier need happy 1.19.11
-                  happy = final.haskell-nix.bootstrap.packages.happy-old-unchecked;
-                };
-
-                buildLlvmPackages = final.buildPackages.llvmPackages_6;
-                llvmPackages = final.llvmPackages_6;
-
-                src-spec = rec {
-                    version = "8.6.5";
-                    url = "https://downloads.haskell.org/~ghc/${version}/ghc-${version}-src.tar.xz";
-                    sha256 = "0qg3zsmbk4rkwkc3jpas3zs74qaxmw4sp4v1mhsbj0a0dzls2jjd";
-                };
-
-                ghc-patches = [ 
-                     (final.fetchurl {
-                    url = "https://raw.githubusercontent.com/obsidiansystems/splices-load-save.nix/master/patches/ghc-8.6.5/splices.patch";
-                    sha256 = "sha256-ro7GcOGiM8zciGHRv8r9qyFwbNcJjJ6wDqj1T1E3EKY=";
-                  })
-                  ./patches/ghc/AC_PROG_CC_99.patch
-                ]; 
-                #++ [ D5123-patch haddock-900-patch ] ++ ghc-patches "8.6.5";
-                  # Add splices
-            });
             ghc865 = final.callPackage ../compiler/ghc (traceWarnOld "8.6" {
                 extra-passthru = { buildGHC = final.buildPackages.haskell-nix.compiler.ghc865; };
 
@@ -562,30 +534,6 @@ in {
 
                 ghc-patches = ghc-patches "8.10.6";
               });
-            ghc8107Splices = final.callPackage ../compiler/ghc (traceWarnOld "8.10" {
-                extra-passthru = { buildGHC = final.buildPackages.haskell-nix.compiler.ghc8107; };
-
-                bootPkgs = bootPkgs // {
-                  ghc = ghcForBuilding810;
-                };
-                inherit sphinx installDeps;
-
-                buildLlvmPackages = final.buildPackages.llvmPackages_12;
-                llvmPackages = final.llvmPackages_12;
-
-                src-spec = rec {
-                    version = "8.10.7";
-                    url = "https://downloads.haskell.org/~ghc/${version}/ghc-${version}-src.tar.xz";
-                    sha256 = "179ws2q0dinl1a39wm9j37xzwm84zfz3c5543vz8v479khigdvp3";
-                };
-                #ghc-patches = ghc-patches "8.10.7";
-                ghc-patches = [
-                  (final.fetchurl {
-                    url = "https://raw.githubusercontent.com/obsidiansystems/splices-load-save.nix/master/patches/ghc-8.10.7/splices.patch";
-                    sha256 = "sha256-pIMPDpBwL3tYPEbIgTfE1oNgL2KMLp7ovcp6E2KOIVY=";
-                  })
-                ];
-            });
             ghc8107 = final.callPackage ../compiler/ghc (traceWarnOld "8.10" {
                 extra-passthru = { buildGHC = final.buildPackages.haskell-nix.compiler.ghc8107; };
 

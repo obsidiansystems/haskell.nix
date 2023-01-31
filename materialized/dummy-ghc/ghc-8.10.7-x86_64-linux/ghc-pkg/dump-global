@@ -699,9 +699,6 @@ exposed-modules:
     TysWiredIn UnVarGraph UnariseStg Unify UniqDFM UniqDSet UniqFM
     UniqMap UniqSet UniqSupply Unique Util Var VarEnv VarSet WorkWrap
     WwLib X86.CodeGen X86.Cond X86.Instr X86.Ppr X86.RegInfo X86.Regs
-hidden-modules:
-    Splices.Plugin Splices.Data Splices.Conversions
-    Splices.Serialise.Class Splices.Serialise.Instances
 import-dirs:
 library-dirs:
 dynamic-library-dirs:
