@@ -225,8 +225,8 @@ let
               then inputMap."${repoData.url}/${repoData.rev or repoData.ref}"
             else if inputMap ? ${repoData.url}
               then
-                (if inputMap.${repoData.url}.rev != repoData.ref
-                  then throw "${inputMap.${repoData.url}.rev} may not match ${repoData.ref} for ${repoData.url} use \"${repoData.url}/${repoData.ref}\" as the inputMap key if ${repoData.ref} is a branch or tag that points to ${inputMap.${repoData.url}.rev}."
+                (if inputMap.${repoData.url}.rev != (repoData.rev or repoData.ref)
+                  then throw "${inputMap.${repoData.url}.rev} may not match ${repoData.rev or repoData.ref} for ${repoData.url} use \"${repoData.url}/${repoData.rev or repoData.ref}\" as the inputMap key if ${repoData.rev or repoData.ref} is a branch or tag that points to ${inputMap.${repoData.url}.rev}."
                   else inputMap.${repoData.url})
             else if repoData.sha256 != null
             then fetchgit { inherit (repoData) url sha256; rev = repoData.rev or repoData.ref; }
@@ -525,15 +525,11 @@ let
         cabal.project.freeze
       chmod +w cabal.project.freeze
     ''}
-    export SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt
-    export GIT_SSL_CAINFO=${cacert}/etc/ssl/certs/ca-bundle.crt
+    export SSL_CERT_FILE=${evalPackages.cacert}/etc/ssl/certs/ca-bundle.crt
+    export GIT_SSL_CAINFO=${evalPackages.cacert}/etc/ssl/certs/ca-bundle.crt
 
-    # Using `cabal v2-freeze` will configure the project (since
-    # it is not configured yet), taking the existing `cabal.project.freeze`
-    # file into account.  Then it "writes out a freeze file which
-    # records all of the versions and flags that are picked" (from cabal docs).
     echo "Using index-state ${index-state-found}"
-    HOME=${
+    CABAL_DIR=${
       # This creates `.cabal` directory that is as it would have
       # been at the time `cached-index-state`.  We may include
       # some packages that will be excluded by `index-state-found`
@@ -544,7 +540,7 @@ let
         index-state = cached-index-state;
         sha256 = index-sha256-found;
       }
-    } cabal v2-freeze ${
+    } make-install-plan ${
           # Setting the desired `index-state` here in case it is not
           # in the cabal.project file. This will further restrict the
           # packages used by the solver (cached-index-state >= index-state-found).
@@ -597,6 +593,11 @@ let
     # as they should not be in the output hash (they may change slightly
     # without affecting the nix).
     find $out \( -type f -or -type l \) ! -name '*.nix' -delete
+
+    # Make the revised cabal files available (after the delete step avove)
+    echo "Moving cabal files from $tmp${subDir'}/dist-newstyle/cabal-files to $out${subDir'}/cabal-files"
+    mv $tmp${subDir'}/dist-newstyle/cabal-files $out${subDir'}/cabal-files
+
     # Remove empty dirs
     find $out -type d -empty -delete
 

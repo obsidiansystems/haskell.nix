@@ -5,12 +5,12 @@
 
 { pkgs, config, ... }:
 let
-  fromUntil = from: until: patch: { version, revision }:
+  fromUntil = from: until: patch: { version }:
     if   builtins.compareVersions version from  >= 0
       && builtins.compareVersions version until <  0
       then patch
       else null;
-  from = v: patch: { version, revision }:
+  from = v: patch: { version }:
     if builtins.compareVersions version v >= 0
       then patch
       else null;
@@ -54,6 +54,18 @@ in {
     (fromUntil "3.4.0.0" "3.5" ../overlays/patches/Cabal/Cabal-3.4-defer-build-tool-depends-7532.patch)
     (fromUntil "3.4.0.0" "3.5" ../overlays/patches/Cabal/Cabal-3.4-speedup-solver-when-tests-enabled-7490.patch)
   ];
+
+  # Avoid dependency on genprimopcode and deriveConstants (cabal does not put these in the plan,
+  # most likely because it finds them in the PATH).
+  # See https://github.com/input-output-hk/haskell.nix/issues/1808
+  packages.ghc.components.library.build-tools = pkgs.lib.mkForce (
+    pkgs.lib.optionals (__compareVersions config.hsPkgs.ghc.identifier.version "9.4.1" > 0) [
+      (config.hsPkgs.buildPackages.alex.components.exes.alex or pkgs.buildPackages.alex)
+      (config.hsPkgs.buildPackages.happy.components.exes.happy or pkgs.buildPackages.happy)
+      pkgs.buildPackages.ghc-extra-packages.${config.compiler.nix-name}.genprimopcode.components.exes.genprimopcode
+      pkgs.buildPackages.ghc-extra-packages.${config.compiler.nix-name}.deriveConstants.components.exes.deriveConstants
+    ]);
+
   # Remove dependency on hsc2hs (hsc2hs should be in ghc derivation)
   packages.mintty.components.library.build-tools = pkgs.lib.mkForce [];
 
@@ -91,16 +103,16 @@ in {
 
   packages.discount.components.library.libs = pkgs.lib.mkForce [ pkgs.discount ];
 
-  packages.llvm-hs.components.library.build-tools = pkgs.lib.mkForce [ 
+  packages.llvm-hs.components.library.build-tools = pkgs.lib.mkForce [
     (fromUntil "5.0.0" "6" pkgs.llvmPackages_5.llvm)
     (fromUntil "6.0.0" "7" pkgs.llvmPackages_6.llvm)
     (fromUntil "7.0.0" "8" pkgs.llvmPackages_7.llvm)
     (fromUntil "8.0.0" "9" pkgs.llvmPackages_8.llvm)
     (fromUntil "9.0.0" "12" pkgs.llvmPackages_9.llvm)
     (fromUntil "12.0.0" "15" pkgs.llvmPackages_12.llvm)
-    # NOTE: we currently don't have a llvm versoin > 12 that has a tag 
-    #       in nixpkgs, so we probably can't build `llvm-hs > 12`, there 
-    #       is however a head version of llvm in nixpkgs, which we might 
+    # NOTE: we currently don't have a llvm versoin > 12 that has a tag
+    #       in nixpkgs, so we probably can't build `llvm-hs > 12`, there
+    #       is however a head version of llvm in nixpkgs, which we might
     #       be able to use if that case were to occur
   ];
 

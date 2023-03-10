@@ -1419,7 +1419,7 @@ pkgs:
 #    "zlib" = [ "emscripten" ];
     "enca" = [ "enca" ];
 #    "enchant-2" = [ "enchant" ];
-    "enchant" = [ "enchant1" ];
+#    "enchant" = [ "enchant1" ];
     "enchant-2" = [ "enchant2" ];
     "libenet" = [ "enet" ];
     "ecore-audio" = [ "enlightenment" ];
@@ -2362,8 +2362,8 @@ pkgs:
 #    "MagickWand-7.Q16HDRI" = [ "imagemagick_light" ];
 #    "MagickWand" = [ "imagemagick_light" ];
     "Imath" = [ "imath" ];
-    "imlibgdk" = [ "imlib" ];
-    "imlib" = [ "imlib" ];
+#    "imlibgdk" = [ "imlib" ];
+#    "imlib" = [ "imlib" ];
     "imlib2" = [ "imlib2" ];
 #    "imlib2" = [ "imlib2-nox" ];
     "libindi" = [ "indilib" ];
@@ -4119,12 +4119,6 @@ pkgs:
     "ply-boot-client" = [ "plymouth" ];
     "ply-splash-core" = [ "plymouth" ];
     "ply-splash-graphics" = [ "plymouth" ];
-    "libpmem2" = [ "pmdk" ];
-    "libpmemblk" = [ "pmdk" ];
-    "libpmemlog" = [ "pmdk" ];
-    "libpmemobj" = [ "pmdk" ];
-    "libpmem" = [ "pmdk" ];
-    "libpmempool" = [ "pmdk" ];
     "pmix" = [ "pmix" ];
     "pm-utils" = [ "pmutils" ];
     "libpodofo" = [ "podofo" ];
@@ -5395,7 +5389,7 @@ pkgs:
     "libvw_c_wrapper" = [ "vowpal-wabbit" ];
     "libvw" = [ "vowpal-wabbit" ];
     "vte-2.91" = [ "vte" ];
-    "vte-2.90" = [ "vte_290" ];
+#    "vte-2.90" = [ "vte_290" ];
     "vulkan" = [ "vulkan-loader" ];
 #    "gmock_main" = [ "vulkan-tools-lunarg" ];
 #    "gmock" = [ "vulkan-tools-lunarg" ];

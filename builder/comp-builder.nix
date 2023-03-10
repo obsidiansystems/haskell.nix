@@ -1,4 +1,4 @@
-{ pkgs, stdenv, buildPackages, ghc, lib, gobject-introspection ? null, haskellLib, makeConfigFiles, haddockBuilder, ghcForComponent, hsPkgs, compiler, runCommand, libffi, gmp, zlib, ncurses, nodejs }@defaults:
+{ pkgs, stdenv, buildPackages, ghc, lib, gobject-introspection ? null, haskellLib, makeConfigFiles, haddockBuilder, ghcForComponent, hsPkgs, compiler, runCommand, libffi, gmp, windows, zlib, ncurses, nodejs }@defaults:
 lib.makeOverridable (
 let self =
 { componentId
@@ -8,7 +8,6 @@ let self =
 , setup
 , src
 , flags
-, revision
 , cabalFile
 , cabal-generator
 , patches ? []
@@ -247,12 +246,12 @@ let
         && x.identifier.name or "" != "hsc2hs")
       (map
         (p: if builtins.isFunction p
-          then p { inherit  (package.identifier) version; inherit revision; }
+          then p { inherit  (package.identifier) version; }
           else p) build-tools))) ++
     lib.optional (pkgconfig != []) buildPackages.cabalPkgConfigWrapper;
 
   # Unfortunately, we need to wrap ghc commands for cabal builds to
-  # work in the nix-shell. See ../doc/removing-with-package-wrapper.md.
+  # work in the nix-shell. See ../docs/dev/removing-with-package-wrapper.md.
   shellWrappers = ghcForComponent {
     componentName = fullName;
     inherit configFiles enableDWARF;
@@ -280,6 +279,9 @@ let
 
       SETUP_HS = setup + /bin/Setup;
 
+      inherit cabalFile;
+      passAsFile = [ "cabalFile" ];
+
       prePatch =
         # If the package is in a sub directory `cd` there first.
         # In some cases the `cleanSrc.subDir` will be empty and the `.cabal`
@@ -293,7 +295,7 @@ let
           ''
         ) +
         (if cabalFile != null
-          then ''cat ${cabalFile} > ${package.identifier.name}.cabal''
+          then ''cp -v $cabalFilePath ${package.identifier.name}.cabal''
           else
             # When building hpack package we use the internal nix-tools
             # (compiled with a fixed GHC version)
@@ -302,11 +304,11 @@ let
             ''
         );
     }
-    # patches can (if they like) depend on the version and revision of the package.
+    # patches can (if they like) depend on the version of the package.
     // lib.optionalAttrs (patches != []) {
       patches = map (p:
         if builtins.isFunction p
-          then p { inherit (package.identifier) version; inherit revision; }
+          then p { inherit (package.identifier) version; }
           else p
         ) patches;
     }
@@ -316,11 +318,15 @@ let
     }
     // lib.optionalAttrs (stdenv.buildPlatform.libc == "glibc") {
       LOCALE_ARCHIVE = "${buildPackages.glibcLocales}/lib/locale/locale-archive";
+    }
+    // lib.optionalAttrs stdenv.hostPlatform.isMusl {
+      # This fixes musl compilation of TH code that depends on C++ (for instance TH code that uses the double-conversion package)
+      LD_LIBRARY_PATH="${pkgs.buildPackages.gcc-unwrapped.lib}/x86_64-unknown-linux-musl/lib";
     };
 
   haddock = haddockBuilder {
     inherit componentId component package flags commonConfigureFlags
-      commonAttrs revision doHaddock
+      commonAttrs doHaddock
       doHoogle hyperlinkSource quickjump setupHaddockFlags
       needsProfiling configFiles preHaddock postHaddock pkgconfig;
 
@@ -438,17 +444,17 @@ let
       # See also https://gitlab.haskell.org/ghc/ghc/-/issues/12935
       (if contentAddressed then ''
         runHook preBuild
-        $SETUP_HS build ${haskellLib.componentTarget componentId} -j1 ${lib.concatStringsSep " " setupBuildFlags}
+        $SETUP_HS build ${haskellLib.componentTarget componentId} -j1 ${lib.concatStringsSep " " (component.setupBuildFlags ++ setupBuildFlags)}
         runHook postBuild
       '' else if stdenv.hostPlatform.isGhcjs then ''
         runHook preBuild
         # https://gitlab.haskell.org/ghc/ghc/issues/9221
-        $SETUP_HS build ${haskellLib.componentTarget componentId} ${lib.concatStringsSep " " setupBuildFlags}
+        $SETUP_HS build ${haskellLib.componentTarget componentId} ${lib.concatStringsSep " " (component.setupBuildFlags ++ setupBuildFlags)}
         runHook postBuild
       '' else ''
         runHook preBuild
         # https://gitlab.haskell.org/ghc/ghc/issues/9221
-        $SETUP_HS build ${haskellLib.componentTarget componentId} -j$(($NIX_BUILD_CORES > 4 ? 4 : $NIX_BUILD_CORES)) ${lib.concatStringsSep " " setupBuildFlags}
+        $SETUP_HS build ${haskellLib.componentTarget componentId} -j$(($NIX_BUILD_CORES > 4 ? 4 : $NIX_BUILD_CORES)) ${lib.concatStringsSep " " (component.setupBuildFlags ++ setupBuildFlags)}
         runHook postBuild
       '');
 
@@ -557,7 +563,10 @@ let
       '')
       + (lib.optionalString (stdenv.hostPlatform.isWindows && (haskellLib.mayHaveExecutable componentId)) (''
         echo "Symlink libffi and gmp .dlls ..."
-        for p in ${lib.concatStringsSep " " [ libffi gmp ]}; do
+        for p in ${lib.concatStringsSep " " ([ libffi gmp ] ++
+              # Also include C++ and mcfgthreads DLLs for GHC 9.4.1 and newer
+              lib.optionals (builtins.compareVersions defaults.ghc.version "9.4.1" >= 0)
+                [ buildPackages.gcc-unwrapped windows.mcfgthreads ])}; do
           find "$p" -iname '*.dll' -exec ln -s {} $out/bin \;
         done
         ''

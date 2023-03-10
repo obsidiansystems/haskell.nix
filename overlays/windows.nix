@@ -45,10 +45,7 @@ final: prev:
           inherit (pkgs.buildPackages) symlinkJoin;
           # iserv-proxy needs to come from the buildPackages, as it needs to run on the
           # build host.
-          inherit (final.buildPackages.ghc-extra-packages."${config.compiler.nix-name}".iserv-proxy.components.exes) iserv-proxy;
-          # remote-iserv however needs to come from the regular packages as it has to
-          # run on the target host.
-          inherit (final.ghc-extra-packages."${config.compiler.nix-name}".remote-iserv.components.exes) remote-iserv;
+          inherit (final.haskell-nix.iserv-proxy-exes.${config.compiler.nix-name}) iserv-proxy iserv-proxy-interpreter;
           # we need to use openssl.bin here, because the .dll's are in the .bin expression.
           # extra-test-libs = [ pkgs.rocksdb pkgs.openssl.bin pkgs.libffi pkgs.gmp ];
         } // {
@@ -61,7 +58,7 @@ final: prev:
 
           # Apply https://github.com/haskell/cabal/pull/6055
           # See also https://github.com/input-output-hk/iohk-nix/issues/136
-          # Cabal.patches = [ ({ version, revision }: (if builtins.compareVersions version "3.0.0" < 0
+          # Cabal.patches = [ ({ version }: (if builtins.compareVersions version "3.0.0" < 0
           #   then pkgs.fetchpatch {
           #     url = "https://patch-diff.githubusercontent.com/raw/haskell/cabal/pull/6055.diff";
           #     sha256 = "145g7s3z9q8d18pxgyngvixgsm6gmwh1rgkzkhacy4krqiq0qyvx";
@@ -70,17 +67,17 @@ final: prev:
           #   else null)) ];
 
           # clock 0.7.2 needs to be patched to support cross compilation.
-          clock.patches              = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isWindows [ ({ version, revision }: (if version == "0.7.2" then ./patches/clock-0.7.2.patch else null)) ];
+          clock.patches              = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isWindows [ ({ version }: (if version == "0.7.2" then ./patches/clock-0.7.2.patch else null)) ];
           # nix calls this package crypto
-          cryptonite-openssl.patches = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isWindows [ ({ version, revision }: if version == "0.7" then ./patches/cryptonite-openssl-0.7.patch else null) ];
+          cryptonite-openssl.patches = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isWindows [ ({ version }: if version == "0.7" then ./patches/cryptonite-openssl-0.7.patch else null) ];
 
           # this patch seems to be rather flaky and highly dependent on
           # the network library. I think we might need to respin that in
           # a better way that doesn't just delete some code, but makes
           # the bounds checks stricter.
-          # http-client.patches        = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isWindows [ ({ version, revision }: if version == "0.5.14" then ./patches/http-client-0.5.14.patch else null) ];
+          # http-client.patches        = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isWindows [ ({ version }: if version == "0.5.14" then ./patches/http-client-0.5.14.patch else null) ];
 
-          conduit.patches            = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isWindows [ ({ version, revision }: if builtins.compareVersions version "1.3.1.1" < 0 then ./patches/conduit-1.3.0.2.patch else null) ];
+          conduit.patches            = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isWindows [ ({ version }: if builtins.compareVersions version "1.3.1.1" < 0 then ./patches/conduit-1.3.0.2.patch else null) ];
           streaming-commons.patches  = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isWindows [ ./patches/streaming-commons-0.2.0.0.patch ];
           x509-system.patches        = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isWindows [ ./patches/x509-system-1.6.6.patch ];
 
