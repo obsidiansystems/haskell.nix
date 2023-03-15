@@ -30,7 +30,7 @@ final: prev: prev.lib.optionalAttrs prev.stdenv.hostPlatform.isAndroid ({
   # kernel tls (ktls) doesn't work with the android kernel. And will complain
   # about lots of implicitly declared functions and undeclared identifiers,
   # because the android (linux) kernel doesn't expose those.
-  openssl = prev.openssl.override { static = true; enableKTLS = false; };
+  #openssl = prev.openssl.override { static = true; enableKTLS = false; };
 
 }) // prev.lib.optionalAttrs prev.stdenv.targetPlatform.isAndroid ({
   #bionic = prev.bionic.override { enableStatic = true; };
