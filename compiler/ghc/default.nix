@@ -178,7 +178,7 @@ let
     ] ++ lib.optionals (enableTerminfo && !stdenv.targetPlatform.isiOS) [
         "--with-curses-includes=${targetPackages.ncurses.dev}/include" "--with-curses-libraries=${targetPackages.ncurses.out}/lib"
     ] ++ lib.optionals (targetLibffi != null) ["--with-system-libffi" "--with-ffi-includes=${targetLibffi.dev}/include" "--with-ffi-libraries=${targetLibffi.out}/lib"
-    ] ++ lib.optional (!enableIntegerSimple) [
+    ] ++ lib.optionals (!enableIntegerSimple) [
         "--with-gmp-includes=${targetGmp.dev}/include" "--with-gmp-libraries=${targetGmp.out}/lib"
     ] ++ lib.optional (targetPlatform == hostPlatform && hostPlatform.libc != "glibc" && !targetPlatform.isWindows) [
         "--with-iconv-includes=${libiconv}/include" "--with-iconv-libraries=${libiconv}/lib"
