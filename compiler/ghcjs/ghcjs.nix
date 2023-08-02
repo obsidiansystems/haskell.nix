@@ -7,6 +7,7 @@
   then "ghc884"
   else "ghc865"
 , ghc ? pkgs.buildPackages.ghc
+, patches ? [ ]
 }:
 let
     isGhcjs88 = builtins.compareVersions ghcjsVersion "8.8.0.0" >= 0;
@@ -16,8 +17,7 @@ let
         src = ghcjsSrc;
         inherit ghcjsVersion compiler-nix-name;
         index-state = "2020-04-25T00:00:00Z";
-#        plan-sha256 = "1wy2lr08maxyi7r8jiwf2gj6pdayk5vxxwh42bj4s2gg4035z0yc";
-#        materialized = ../../materialized/ghcjs;
+        inherit patches;
     };
 
     inherit (project.hsPkgs) ghcjs;
@@ -200,7 +200,7 @@ let
                  [booted-ghcjs ghc db hostDb pkgs.ncurses pkgs.gmp pkgs.libffi]
               ++ (pkgs.haskell-nix.haskellLib.flatLibDepends db.component)
               ++ (pkgs.haskell-nix.haskellLib.flatLibDepends hostDb.component)
-              ));    
+              ));
       in pkgs.stdenv.mkDerivation {
         name = "${compilerName}-${ghcVersion}-bundle";
         src = booted-ghcjs;

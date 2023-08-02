@@ -35,6 +35,7 @@
     version = "3.2.5";
     materialized = materialized-dir + "/ghcjs/alex/${compiler-nix-name}";
   }
+, patches ? [ ]
 , cabal-install ?
   if (builtins.compareVersions ghcjsVersion "8.10.0.0" >= 0)
   then pkgs.haskell-nix.tool compiler-nix-name "cabal" {
@@ -93,7 +94,7 @@ let
     configured-src = (pkgs.runCommandCC "configured-ghcjs-src" {
         buildInputs = configureInputs;
         inherit src;
-        } ''
+        } (''
         export HOME=$(pwd)
         mkdir $HOME/.cabal
         touch $HOME/.cabal/config
@@ -104,7 +105,7 @@ let
         # TODO: Find a better way to avoid impure version numbers
         sed -i 's/RELEASE=NO/RELEASE=YES/' ghc/configure.ac
         sed -i 's/${ghcjsVersion}/${ghcVersion}/' ghcjs.cabal
-
+        '' + builtins.concatStringsSep "\n" (map (a: "patch -p1 < ${a}") patches) + ''
         ${
           # TODO: How to actually fix this?
           # Seems to work fine and produce the right files.
@@ -133,16 +134,14 @@ let
         for a in integer-gmp base unix; do
           cp ${../overlays/patches/config.sub} lib/boot/pkg/$a/config.sub
         done
-        '')  // {
+        ''))  // {
           # The configured source includes /nix/store paths and so filtering can fail.
           filterPath = { path, ... }: path;
         };
         # see https://github.com/ghcjs/ghcjs/issues/751 for the happy upper bound.
 
     ghcjsProject = pkgs.haskell-nix.cabalProject' (
-        (pkgs.lib.filterAttrs
-            (n: _: !(builtins.any (x: x == n)
-                ["src" "ghcjsVersion" "ghcVersion" "happy" "alex" "cabal-install"])) args) // {
+        (builtins.removeAttrs args ["patches" "src" "ghcjsVersion" "ghcVersion" "happy" "alex" "cabal-install"]) // {
         src = configured-src;
         index-state = "2021-03-20T00:00:00Z";
         inherit compiler-nix-name;
