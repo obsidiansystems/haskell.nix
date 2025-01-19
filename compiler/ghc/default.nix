@@ -431,17 +431,23 @@ haskell-nix.haskellLib.makeCompilerDeps (stdenv.mkDerivation (rec {
         export CXX="${targetCC}/bin/em++"
         export LD="${targetCC}/bin/emcc"
     '' + (
-      # Including AR and RANLIB here breaks tests.js-template-haskell for GHC <9.12
+      # Including RANLIB here breaks tests.js-template-haskell for GHC >=9.12
       # `LLVM ERROR: malformed uleb128, extends past end`
       if builtins.compareVersions ghc-version "9.12" >= 0
-        then ''
-          export AR="${targetCC}/bin/emar"
-          export NM="${targetCC}/share/emscripten/emnm"
-          export RANLIB="${targetCC}/bin/emranlib"
-        ''
-        else ''
-          export NM="${targetCC}/share/emscripten/emnm"
-        ''
+      then ''
+        export AR="${targetCC}/bin/emar"
+        export NM="${targetCC}/share/emscripten/emnm"
+      ''
+      # Including AR and RANLIB here breaks tests.js-template-haskell for GHC <9.8
+      # `LLVM ERROR: malformed uleb128, extends past end`
+      else if builtins.compareVersions ghc-version "9.8" >= 0 ''
+        export AR="${targetCC}/bin/emar"
+        export NM="${targetCC}/share/emscripten/emnm"
+        export RANLIB="${targetCC}/bin/emranlib"
+      ''
+      else ''
+        export NM="${targetCC}/share/emscripten/emnm"
+      ''
     ) + ''
         export EM_CACHE=$(mktemp -d)
         if [ -d ${targetCC}/share/emscripten/cache ]; then
