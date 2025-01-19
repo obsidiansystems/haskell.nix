@@ -401,19 +401,8 @@ stdenv.mkDerivation (rec {
         export CC="${targetCC}/bin/emcc"
         export CXX="${targetCC}/bin/em++"
         export LD="${targetCC}/bin/emcc"
-    '' + (
-      # Including AR and RANLIB here breaks tests.js-template-haskell for GHC 9.6
-      # `LLVM ERROR: malformed uleb128, extends past end`
-      if builtins.compareVersions ghc-version "9.8" >= 0
-        then ''
-          export AR="${targetCC}/bin/emar"
-          export NM="${targetCC}/share/emscripten/emnm"
-          export RANLIB="${targetCC}/bin/emranlib"
-        ''
-        else ''
-          export NM="${targetCC}/share/emscripten/emnm"
-        ''
-    ) + ''
+        export NM="${targetCC}/share/emscripten/emnm"
+    '' + ''
         export EM_CACHE=$(mktemp -d)
         mv config.sub.ghcjs config.sub
     '')
