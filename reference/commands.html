@@ -3,8 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Page not found - Haskell.nix</title>
-        <base href="/">
+        <title>Command-line tools - Haskell.nix</title>
 
 
         <!-- Custom HTML head -->
@@ -13,33 +12,33 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon.svg">
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="highlight-css" href="highlight.css">
-        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
-        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "";
+            const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc.js"></script>
+        <script src="../toc.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -103,7 +102,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
             </noscript>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -138,7 +137,7 @@
                     <h1 class="menu-title">Haskell.nix</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
 
@@ -167,14 +166,84 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="document-not-found-404"><a class="header" href="#document-not-found-404">Document not found (404)</a></h1>
-<p>This URL is invalid, sorry. Please use the navigation bar or search to continue.</p>
+                        <h1 id="command-line-tools"><a class="header" href="#command-line-tools">Command line tools</a></h1>
+<p>To install the command line tools refer to the <a href="https://input-output-hk.github.io/haskell.nix/dev/manually-generating-nix-expressions/">Installing nix-tools</a> section.</p>
+<h2 id="stack-to-nix"><a class="header" href="#stack-to-nix">stack-to-nix</a></h2>
+<pre><code>stack-to-nix - a stack to nix converter
+
+Usage: stack-to-nix (-o|--output DIR) [--stack-yaml FILE]
+                    [--ignore-package-yaml] [--cache FILE]
+  Generate a Nix expression for a Haskell package using Stack
+
+Available options:
+  -o,--output DIR          Generate output in DIR
+  --stack-yaml FILE        Override project stack.yaml (default: "stack.yaml")
+  --ignore-package-yaml    disable hpack run and use only cabal disregarding
+                           package.yaml existence
+  --cache FILE             Dependency cache
+                           file (default: ".stack-to-nix.cache")
+  -h,--help                Show this help text
+</code></pre>
+<p>Use this for stack projects. If a <code>default.nix</code> does not exist in the
+output directory, it will create a basic one with a
+<a href="../manually-generating-nix-expressions#Using-Stack"><code>mkStackPkgSet</code></a> function.</p>
+<blockquote>
+<p><strong>Note:</strong></p>
+<p>If you find that there are missing files which should have been
+generated, remove <code>.stack-to-nix.cache</code>
+(The open issue is <a href="https://github.com/input-output-hk/haskell.nix/issues/57">#57</a>).</p>
+</blockquote>
+<h2 id="plan-to-nix"><a class="header" href="#plan-to-nix">plan-to-nix</a></h2>
+<pre><code>plan-to-nix - a stack to nix converter
+
+Usage: plan-to-nix (-o|--output DIR) [--plan-json FILE] [--cabal-project FILE]
+                   [--cache FILE]
+  Generate a Nix expression for a Haskell package using Cabal
+
+Available options:
+  -o,--output DIR          Generate output in DIR
+  --plan-json FILE         Override plan.json
+                           location (default: "dist-newstyle/cache/plan.json")
+  --cabal-project FILE     Override path to
+                           cabal.project (default: "cabal.project")
+  --cache FILE             Dependency cache file (default: ".nix-tools.cache")
+  -h,--help                Show this help text
+</code></pre>
+<p>Use this for Cabal new-build projects (even if you don't have a
+<code>cabal.project</code>). Before running, you need to create a plan. For more
+information, see <a href="../dev/manually-generating-nix-expressions#Using-Cabal">Cabal Projects</a> in the user
+guide.</p>
+<p>It will create a template <code>default.nix</code> in the output directory,
+unless that file already exists.</p>
+<p>Inside the output directory, there will be another directory
+<code>.plan.nix</code>, which contains Nix expressions for all local packages,
+generated by <code>cabal-to-nix</code>. The output file <code>pkgs.nix</code> refers to
+these files.</p>
+<blockquote>
+<p><strong>Note:</strong></p>
+<p>If you find that there are missing files which should have been
+generated, remove <code>.nix-tools.cache</code>
+(The open issue is <a href="https://github.com/input-output-hk/haskell.nix/issues/57">#57</a>).</p>
+</blockquote>
+<h2 id="cabal-to-nix"><a class="header" href="#cabal-to-nix">cabal-to-nix</a></h2>
+<pre><code>Usage: cabal-to-nix FILE.cabal
+</code></pre>
+<p>This writes (to stdout) a <a href="https://github.com/input-output-hk/haskell.nix">Haskell.nix</a> Nix expression for the given
+cabal package.</p>
+<p>Normally, you do not need to run <code>cabal-to-nix</code> yourself. It is called
+by <code>stack-to-nix</code> and <code>plan-to-nix</code>.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../reference/supported-ghc-versions.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
 
+                            <a rel="next prefetch" href="../reference/library.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -182,7 +251,13 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../reference/supported-ghc-versions.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
 
+                    <a rel="next prefetch" href="../reference/library.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>
@@ -195,13 +270,13 @@
         </script>
 
 
-        <script src="elasticlunr.min.js"></script>
-        <script src="mark.min.js"></script>
-        <script src="searcher.js"></script>
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
 
-        <script src="clipboard.min.js"></script>
-        <script src="highlight.js"></script>
-        <script src="book.js"></script>
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
 
         <!-- Custom JS scripts -->
 

@@ -3,8 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Page not found - Haskell.nix</title>
-        <base href="/">
+        <title>Handling git repositories in projects - Haskell.nix</title>
 
 
         <!-- Custom HTML head -->
@@ -13,33 +12,33 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon.svg">
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="highlight-css" href="highlight.css">
-        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
-        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "";
+            const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc.js"></script>
+        <script src="../toc.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -103,7 +102,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
             </noscript>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -138,7 +137,7 @@
                     <h1 class="menu-title">Haskell.nix</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
 
@@ -167,14 +166,76 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="document-not-found-404"><a class="header" href="#document-not-found-404">Document not found (404)</a></h1>
-<p>This URL is invalid, sorry. Please use the navigation bar or search to continue.</p>
+                        <h1 id="handling-git-repositories-in-projects"><a class="header" href="#handling-git-repositories-in-projects">Handling git repositories in projects</a></h1>
+<p>Both <code>stack.yaml</code> and <code>cabal.project</code> files can contain references
+to git repositories containing the version of a particular package
+that we wish to use.  This is mostly handled automatically by
+<code>nix-tools</code> and <code>haskell.nix</code> however when we want to use a nix
+system that is configured to use restricted mode (typically hydra)
+it will need additional hashes for the referenced repositories.</p>
+<p>When using <code>project</code>, <code>cabalProject</code> or <code>stackProject</code> functions
+you can include the hash needed in a comment.</p>
+<p>To calculate the hash use <code>nix-prefetch-git</code>:</p>
+<pre><code>$ nix-prefetch-git https://github.com/input-output-hk/haskell.nix.git bc01ebc05a8105035c9449943046b46c8364b932
+...
+{
+  "url": "https://github.com/input-output-hk/haskell.nix.git",
+  "rev": "bc01ebc05a8105035c9449943046b46c8364b932",
+  "date": "2019-05-30T13:13:18+08:00",
+  "sha256": "003lm3pm024vhbfmii7xcdd9v2rczpflxf7gdl2pyxia7p014i8z",
+  "fetchSubmodules": false
+}
+</code></pre>
+<h2 id="cabalproject"><a class="header" href="#cabalproject">Cabal.project</a></h2>
+<p>Add a <code>--sha256</code> comment to the <code>cabal.project</code> file:</p>
+<pre><code>source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/haskell.nix.git
+  tag: bc01ebc05a8105035c9449943046b46c8364b932
+  subdir: test/cabal-simple
+  --sha256: 003lm3pm024vhbfmii7xcdd9v2rczpflxf7gdl2pyxia7p014i8z
+</code></pre>
+<h2 id="stack"><a class="header" href="#stack">Stack</a></h2>
+<p>Add a <code># nix-sha256</code> comment to the <code>stack.yaml</code> file:</p>
+<pre><code>extra-deps:
+- git: https://github.com/input-output-hk/haskell.nix.git
+  commit: bc01ebc05a8105035c9449943046b46c8364b932
+  subdirs:
+    - test/cabal-simple
+  # nix-sha256: 003lm3pm024vhbfmii7xcdd9v2rczpflxf7gdl2pyxia7p014i8z
+</code></pre>
+<h2 id="avoiding-modifying-cabalproject-and-stackyaml"><a class="header" href="#avoiding-modifying-cabalproject-and-stackyaml">Avoiding modifying cabal.project and stack.yaml</a></h2>
+<p>In some cases we cannot modify the <code>cabal.project</code> or <code>stack.yaml</code> file to add
+sha256 comments. As an alternative we can pass in a <code>sha256map</code>. For instance,
+pandoc includes a <code>cabal.project</code> file on hackage which includes a
+<code>source-repository-package</code> stanza for <code>pandoc-citeproc</code>:</p>
+<pre><code class="language-nix">{ haskell-nix, testSrc } :
+let
+  pandoc = haskell-nix.hackage-package {
+    name         = "pandoc";
+    version      = "2.9.2.1";
+    index-state  = "2020-04-15T00:00:00Z"; 
+    # Function that returns a sha256 string by looking up the location
+    # and tag in a nested attrset
+    sha256map =
+      { "https://github.com/jgm/pandoc-citeproc"."0.17"
+          = "0dxx8cp2xndpw3jwiawch2dkrkp15mil7pyx7dvd810pwc22pm2q"; };
+  };
+in
+  pandoc.components.exes.pandoc
+</code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tutorials/clean-git.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
 
+                            <a rel="next prefetch" href="../tutorials/pkg-map.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -182,7 +243,13 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tutorials/clean-git.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
 
+                    <a rel="next prefetch" href="../tutorials/pkg-map.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>
@@ -195,13 +262,13 @@
         </script>
 
 
-        <script src="elasticlunr.min.js"></script>
-        <script src="mark.min.js"></script>
-        <script src="searcher.js"></script>
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
 
-        <script src="clipboard.min.js"></script>
-        <script src="highlight.js"></script>
-        <script src="book.js"></script>
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
 
         <!-- Custom JS scripts -->
 

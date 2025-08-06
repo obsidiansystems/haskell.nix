@@ -3,8 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Page not found - Haskell.nix</title>
-        <base href="/">
+        <title>Removing withPackage wrapper - Haskell.nix</title>
 
 
         <!-- Custom HTML head -->
@@ -13,33 +12,33 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon.svg">
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="highlight-css" href="highlight.css">
-        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
-        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "";
+            const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc.js"></script>
+        <script src="../toc.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -103,7 +102,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
             </noscript>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -138,7 +137,7 @@
                     <h1 class="menu-title">Haskell.nix</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
 
@@ -167,14 +166,62 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="document-not-found-404"><a class="header" href="#document-not-found-404">Document not found (404)</a></h1>
-<p>This URL is invalid, sorry. Please use the navigation bar or search to continue.</p>
+                        <h1 id="ghcwithpackages-wrapper-removal"><a class="header" href="#ghcwithpackages-wrapper-removal"><code>ghcWithPackages</code> wrapper removal</a></h1>
+<p>The current <a href="https://nixos.org/nixpkgs/manual/#users-guide-to-the-haskell-infrastructure">Nixpkgs Haskell infrastructure</a> and <code>haskell.nix</code> both
+provide a <code>ghcWithPackages</code> derivation which contains shell script
+wrappers that wrap <code>ghc</code> and <code>ghc-pkg</code>.</p>
+<p>In the Nixpkgs Haskell infrastructure, the wrapper scripts are used
+for building Haskell packages. However, in <code>haskell.nix</code>, the wrappers
+are only used for development environments.</p>
+<p>The wrapper scripts provide a <code>ghc</code> command that "knows" about the
+package set and has all Haskell package dependencies available to it.</p>
+<p>We would like to remove the wrapper scripts, but it's currently not
+possible to configure all build tools using environment variables
+alone.</p>
+<h2 id="plain-ghc"><a class="header" href="#plain-ghc">Plain <code>ghc</code></a></h2>
+<p>When using <code>ghc</code> or <code>ghci</code> by itself, the <code>GHC_ENVIRONMENT</code> variable
+can point to a configuration file containing an exact package
+set. This works quite well.</p>
+<h2 id="ghc-pkg"><a class="header" href="#ghc-pkg"><code>ghc-pkg</code></a></h2>
+<p>The package tool <code>ghc-pkg</code> does not recognize <code>GHC_ENVIRONMENT</code>, but
+does recognize a <code>GHC_PACKAGE_PATH</code> pointing to a <code>package.conf.d</code>.</p>
+<p>This works well. However, the <code>cabal</code> command will refuse to start if
+<code>GHC_PACKAGE_PATH</code> is set.</p>
+<h2 id="setuphs"><a class="header" href="#setuphs"><code>Setup.hs</code></a></h2>
+<p>When invoking <code>Setup.hs configure</code>, the package database is provided
+with the <code>--package-db</code> argument and exact dependencies in the package
+set can be provided as <code>--dependency</code> arguments.</p>
+<p>The <code>haskell.nix</code> component builder uses <code>Setup.hs</code> with these
+command-line options to build Haskell packages.</p>
+<h2 id="cabal-new-build"><a class="header" href="#cabal-new-build"><code>cabal new-build</code></a></h2>
+<p>Cabal-install will observe the <code>CABAL_CONFIG</code> environment variable,
+which points to a cabal config file. This config file can provide a
+<code>package-db</code> value, but it can't specify exact versions of packages.</p>
+<p>Cabal is designed to solve dependencies, not simply take the package
+set which is given to it.</p>
+<p>Therefore, <code>cabal</code> does not use <code>GHC_ENVIRONMENT</code>, but instead creates
+its own environment file. It will not accept <code>--dependency</code> arguments.</p>
+<p>As far as I know, the best way to force <code>cabal</code> to take a pre-computed
+package set is to use a <code>new-freeze</code> file. However there is no
+environment variable (or config file entry) which can specify a path
+to a freeze file.</p>
+<p>Specifying a <code>package-db</code> path in the cabal config file is not enough
+for it to successfully resolve dependencies.</p>
+<p>As mentioned before, <code>cabal</code> does not work when <code>GHC_PACKAGE_PATH</code> is
+set. The best way to work around this is to wrap <code>ghc</code> and <code>ghc-pkg</code>
+in shell scripts.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../dev/nixpkgs-pin.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
 
+                            <a rel="next prefetch" href="../dev/tests.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -182,7 +229,13 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../dev/nixpkgs-pin.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
 
+                    <a rel="next prefetch" href="../dev/tests.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>
@@ -195,13 +248,13 @@
         </script>
 
 
-        <script src="elasticlunr.min.js"></script>
-        <script src="mark.min.js"></script>
-        <script src="searcher.js"></script>
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
 
-        <script src="clipboard.min.js"></script>
-        <script src="highlight.js"></script>
-        <script src="book.js"></script>
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
 
         <!-- Custom JS scripts -->
 

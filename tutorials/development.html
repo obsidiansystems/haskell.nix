@@ -1,0 +1,396 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Creating a development environment - Haskell.nix</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Haskell.nix</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <p>Haskell.nix also provides reproducible development environments for
+your Haskell projects. These environments can contain not only GHC and
+your Haskell package dependencies, but also the required system
+libraries and build tools.</p>
+<p>Inside the development shell, you can run commands such as <code>ghc</code>,
+<code>ghci</code>, or <code>cabal new‑build</code> (<code>cabal build</code> on Cabal 3.0),
+and they will have all dependencies available.</p>
+<p>Every dependency will be cached in your Nix store. If you have set up
+Hydra CI, then your team can share pre-built dependencies.</p>
+<p>These examples assume that you have created your package set as
+described in <a href="getting-started.html">Creating Nix builds for your projects</a> and
+it exists in a file called <code>default.nix</code>.</p>
+<blockquote>
+<p><strong>Note:</strong></p>
+<p>Old-style <code>cabal build</code> and <code>stack</code> builds are not (yet)
+supported. For example, <code>stack</code> will (by design) download and
+rebuild all dependencies, even though they are available in the
+shell. However, if you have a Stack project, you can generate the
+package set with Haskell.nix, then use <code>cabal new‑build</code> to work
+on it.  Starting Cabal 3.0 <code>cabal build</code> will work out of the box, as
+new style builds are the default.</p>
+</blockquote>
+<h2 id="how-to-get-a-development-shell"><a class="header" href="#how-to-get-a-development-shell">How to get a development shell</a></h2>
+<p>If you have a Cabal or Stack project with one or more packages
+(i.e. multiple <code>.cabal</code> files, not a single package with multiple
+components), then you will need a development environment that
+contains the <em>dependencies</em> of your packages, but not the packages
+themselves. This is what the <a href="../reference/library.html#shellfor"><code>shellFor</code></a> function does.</p>
+<pre><code class="language-nix"># shell.nix
+let
+  project = import ./default.nix;
+in
+  project.shellFor {
+    # ALL of these arguments are optional.
+
+    # List of packages from the project you want to work on in
+    # the shell (default is all the projects local packages).
+    packages = ps: with ps; [
+      pkga
+      pkgb
+    ];
+
+    # Builds a Hoogle documentation index of all dependencies,
+    # and provides a "hoogle" command to search the index.
+    withHoogle = true;
+
+    # Some common tools can be added with the `tools` argument
+    tools = {
+      cabal = "3.2.0.0";
+      hlint = "latest"; # Selects the latest version in the hackage.nix snapshot
+      haskell-language-server = "latest";
+    };
+    # See overlays/tools.nix for more details
+
+    # Some you may need to get some other way.
+    buildInputs = [ (import &lt;nixpkgs&gt; {}).git ];
+
+    # Sellect cross compilers to include.
+    crossPlatforms = ps: with ps; [
+      ghcjs      # Adds support for `js-unknown-ghcjs-cabal build` in the shell
+      # mingwW64 # Adds support for `x86_64-W64-mingw32-cabal build` in the shell
+    ];
+
+    # Prevents cabal from choosing alternate plans, so that
+    # *all* dependencies are provided by Nix.
+    exactDeps = true;
+  }
+</code></pre>
+<p>See also: <a href="../reference/library.html#shellfor">Haskell.nix Library Reference: <code>shellFor</code></a></p>
+<h2 id="how-to-get-a-local-hoogle-index"><a class="header" href="#how-to-get-a-local-hoogle-index">How to get a local Hoogle index</a></h2>
+<p>If you need a local Hoogle for all the dependencies of your project create this file</p>
+<pre><code class="language-nix"># shell-hoogle.nix
+let
+  project = import ./default.nix {};
+in
+  project.shellFor {
+      packages = ps: [ps.my-package];
+      withHoogle = true;
+  }
+</code></pre>
+<p>and run <code>nix-shell shell-hoogle.nix --run "hoogle server --local"</code>.
+This will open a local Hoogle server at <code>http://127.0.0.1:8080</code>.</p>
+<h2 id="how-to-get-an-ad-hoc-development-shell-including-certain-packages"><a class="header" href="#how-to-get-an-ad-hoc-development-shell-including-certain-packages">How to get an ad-hoc development shell including certain packages</a></h2>
+<p>This creates a development environment with the given packages
+registered in the package database. The <code>ghcWithPackages</code> function
+operates on a Haskell.nix package set, and accepts an argument that
+selects packages from the larger package set.</p>
+<pre><code class="language-nix"># shell.nix
+let
+  haskellNix = import (builtins.fetchTarball "https://github.com/input-output-hk/haskell.nix/archive/master.tar.gz") {};
+  nixpkgs = import haskellNix.sources.nixpkgs haskellNix.nixpkgsArgs;
+  haskell = nixpkgs.haskell-nix;
+in
+  haskell.haskellPackages.ghcWithPackages (ps: with ps;
+    [ lens conduit conduit-extra ])
+</code></pre>
+<p>If you need a Hoogle documentation index, use <code>ghcWithHoogle</code> in place
+of <code>ghcWithPackages</code>.</p>
+<h2 id="how-to-get-packages-from-a-certain-stackage-snapshot"><a class="header" href="#how-to-get-packages-from-a-certain-stackage-snapshot">How to get packages from a certain Stackage snapshot</a></h2>
+<p>Haskell.nix knows about every released Stackage snapshot. You can use
+it to build packages from a given snapshot, without setting up a full
+project.</p>
+<pre><code class="language-nix">let
+  haskellNix = import (builtins.fetchTarball "https://github.com/input-output-hk/haskell.nix/archive/master.tar.gz") {};
+  nixpkgs = import haskellNix.sources.nixpkgs haskellNix.nixpkgsArgs;
+  haskell = nixpkgs.haskell-nix;
+in
+  haskell.snapshots."lts-13.18".alex.components.exes.alex
+</code></pre>
+<p>There are Haskell.nix package sets for every Stackage snaphot under
+<code>haskell.snapshots</code>.</p>
+<p>The alias <code>haskell.haskellPackages</code> corresponds to the package set for
+a recent LTS Haskell version.</p>
+<p>You can use <code>ghcWithPackages</code> on any of these package sets to quickly
+get a shell with some packages.</p>
+<blockquote>
+<p>⚠️ <strong>Warning:</strong></p>
+<p>The build will not work if your Nixpkgs does not contain the version
+of GHC specified in the snapshot. Nixpkgs only carries the
+latest version of each recent release series, so many snapshots
+can't be built.</p>
+</blockquote>
+<h2 id="emacs-ide-support"><a class="header" href="#emacs-ide-support">Emacs IDE support</a></h2>
+<p>Once you have a development shell, then you can begin configuring
+Emacs to use it. The way I do it is:</p>
+<ol>
+<li>
+<p>Run <a href="https://github.com/target/lorri">lorri watch</a> to continuously
+build the shell environment and maintain GC roots.</p>
+</li>
+<li>
+<p>Use <a href="https://github.com/wbolster/emacs-direnv">emacs‑direnv</a> to
+push the development environment into Emacs.</p>
+</li>
+<li>
+<p>Use <a href="https://github.com/jyp/dante">Dante</a> for highlighting errors
+and auto-completion. You must customize Dante to prevent it from
+automatically using <code>nix‑shell</code> or <code>stack</code>. Trim <code>dante‑methods</code> to
+just <code>new‑build</code> and <code>bare‑ghci</code>.</p>
+<p>You can also use <a href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Directory-Variables.html"><code>.dir‑locals.el</code></a>
+for this. If your project has multiple targets, set <code>dante‑target</code>
+per-directory.</p>
+</li>
+<li>
+<p>For <a href="https://github.com/haskell/haskell-mode"><code>haskell‑mode</code></a>
+interactive Haskell, set <code>haskell‑process‑type</code> to
+<code>cabal‑new‑repl</code>.</p>
+</li>
+</ol>
+<h2 id="using-nix-repl"><a class="header" href="#using-nix-repl">Using <code>nix repl</code></a></h2>
+<p>It's sometimes useful to load <a href="https://github.com/input-output-hk/haskell.nix">Haskell.nix</a> in the <a href="https://nixos.org/manual/nix/unstable/command-ref/new-cli/nix3-repl.html">REPL</a> to explore
+attrsets and try examples.</p>
+<pre><code># example.nix
+{ nixpkgs ? &lt;nixpkgs&gt; }:
+rec {
+  haskell = import nixpkgs (import (builtins.fetchTarball https://github.com/input-output-hk/haskell.nix/archive/master.tar.gz) {}).nixpkgsArgs;
+  pkgNames = haskell.pkgs.lib.attrNames haskell.haskell-nix.snapshots."lts-13.18";
+}
+</code></pre>
+<p>Load the example file:</p>
+<pre><code>$ nix repl
+Welcome to Nix 2.10.3. Type :? for help.
+
+nix-repl&gt; :l &lt;nixpkgs&gt;
+Added 16938 variables.
+
+nix-repl&gt; :l example.nix
+Added 2 variables.
+
+nix-repl&gt; lib.take 5 pkgNames
+[ "AC-Angle" "ALUT" "ANum" "Agda" "Allure" ]
+
+nix-repl&gt; :q
+</code></pre>
+<p>Now that you have <code>nix-tools</code> and are able to import <a href="https://github.com/input-output-hk/haskell.nix">Haskell.nix</a>,
+you can continue to the next chapter.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../tutorials/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../tutorials/getting-started.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../tutorials/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../tutorials/getting-started.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

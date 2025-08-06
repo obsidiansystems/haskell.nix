@@ -3,8 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Page not found - Haskell.nix</title>
-        <base href="/">
+        <title>IOHKs nix library - Haskell.nix</title>
 
 
         <!-- Custom HTML head -->
@@ -13,33 +12,33 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon.svg">
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="highlight-css" href="highlight.css">
-        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
-        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+        <link rel="stylesheet" id="highlight-css" href="../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "";
+            const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc.js"></script>
+        <script src="../toc.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -103,7 +102,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
             </noscript>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -138,7 +137,7 @@
                     <h1 class="menu-title">Haskell.nix</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
 
@@ -167,14 +166,120 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="document-not-found-404"><a class="header" href="#document-not-found-404">Document not found (404)</a></h1>
-<p>This URL is invalid, sorry. Please use the navigation bar or search to continue.</p>
+                        <h1 id="iohks-nix-tooling"><a class="header" href="#iohks-nix-tooling">IOHK's nix tooling</a></h1>
+<h2 id="iohk-nix"><a class="header" href="#iohk-nix"><a href="https://github.com/input-output-hk/iohk-nix"><code>iohk-nix</code></a></a></h2>
+<p><code>iohk-nix</code> is IOHK's shared nix library. It provides some templates to
+make working with <code>haskell.nix</code> trivial but is non-essential to use
+<code>haskell.nix</code> infrastructure.</p>
+<h3 id="libnix"><a class="header" href="#libnix"><code>lib.nix</code></a></h3>
+<pre><code class="language-nix">let
+  # iohk-nix can be overridden for debugging purposes by setting
+  # NIX_PATH=iohk_nix=/path/to/iohk-nix
+  iohkNix = import (
+    let try = builtins.tryEval &lt;iohk_nix&gt;;
+    in if try.success
+    then builtins.trace "using host &lt;iohk_nix&gt;" try.value
+    else
+      let
+        spec = builtins.fromJSON (builtins.readFile ./iohk-nix.json);
+      in builtins.fetchTarball {
+        url = "${spec.url}/archive/${spec.rev}.tar.gz";
+        inherit (spec) sha256;
+      }) {};
+
+  pkgs = iohkNix.pkgs;
+  lib = pkgs.lib;
+in lib // { inherit iohkNix pkgs; inherit (iohkNix) nix-tools; }
+</code></pre>
+<h3 id="iohk-nixjson"><a class="header" href="#iohk-nixjson"><code>iohk-nix.json</code></a></h3>
+<pre><code class="language-json">{
+    "url": "https://github.com/input-output-hk/iohk-nix",
+    "rev": "c92f0119ef5814b0ed1f445c2fdcf8894e326294",
+    "sha256": "05r90x6x3yp1nb66rkc4n0i8q15c634rrdsr2zvb118s3sdcmmrm",
+    "fetchSubmodules": false
+}
+</code></pre>
+<h3 id="nixpkgsnix"><a class="header" href="#nixpkgsnix"><code>nix/pkgs.nix</code></a></h3>
+<pre><code class="language-nix">{ pkgs ? import &lt;nixpkgs&gt; {}
+, iohk-extras ? {}
+, iohk-module ? {}
+, haskell
+, hackage
+, stackage
+, ...
+}:
+let
+  # our packages
+  stack-pkgs = import ./.stack-pkgs.nix;
+
+  # Build the packageset with module support.
+  # We can essentially override anything in the modules
+  # section.
+  #
+  #  packages.cbors.patches = [ ./one.patch ];
+  #  packages.cbors.flags.optimize-gmp = false;
+  #
+  compiler = (stack-pkgs.extras hackage).compiler.nix-name;
+  pkgSet = haskell.mkNewPkgSet {
+    inherit pkgs;
+    pkg-def = stackage.${stack-pkgs.resolver};
+    # These extras allow extension or restriction of the set of
+    # packages we are interested in. By using the stack-pkgs.extras
+    # we restrict our package set to the ones provided in stack.yaml.
+    pkg-def-extras = [
+      stack-pkgs.extras
+      iohk-extras.${compiler}
+    ];
+    # package customizations
+    modules = [
+      # This module will ensure that we get the necessary
+      # patches ontop of GHC packages that for which the
+      # ones that GHC ships are not identical to the ones
+      # we find on hackage. These patches will make sure
+      # they are identical by augmenting the packages on
+      # hackage to match those that ship with ghc.
+      haskell.ghcHackagePatches.${compiler}
+
+      # the iohk-module will supply us with the necessary
+      # cross compilation plumbing to make Template Haskell
+      # work when cross compiling.  For now we need to
+      # list the packages that require template haskell
+      # explicity here.
+      iohk-module
+    ];
+  };
+in
+  pkgSet.config.hsPkgs // { _config = pkgSet.config; }
+</code></pre>
+<h3 id="defaultnix"><a class="header" href="#defaultnix"><code>default.nix</code></a></h3>
+<pre><code class="language-nix">let
+  localLib = import ./lib.nix;
+in
+# This file needs to export a function that takes
+# the arguments it is passed and forwards them to
+# the default-nix template from iohk-nix. This is
+# important so that the release.nix file can properly
+# parameterize this file when targetting different
+# hosts.
+{ ... }@args:
+# We will instantiate the defaul-nix template with the
+# nix/pkgs.nix file...
+localLib.nix-tools.default-nix ./nix/pkgs.nix args
+# ... and add a few custom packages as well.
+// { }
+</code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../template/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
 
+                            <a rel="next prefetch" href="../dev/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -182,7 +287,13 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../template/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
 
+                    <a rel="next prefetch" href="../dev/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
             </nav>
 
         </div>
@@ -195,13 +306,13 @@
         </script>
 
 
-        <script src="elasticlunr.min.js"></script>
-        <script src="mark.min.js"></script>
-        <script src="searcher.js"></script>
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
 
-        <script src="clipboard.min.js"></script>
-        <script src="highlight.js"></script>
-        <script src="book.js"></script>
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
 
         <!-- Custom JS scripts -->
 
